@@ -10,12 +10,11 @@
         body { font-family: 'JetBrains+Mono', monospace; background-color: #050505; color: #00ff41; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .hud-border { border: 1px solid #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.1); }
         .scanline { background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 100; position: fixed; inset: 0; }
-        .tab-content { display: none; height: 100%; overflow-y: auto; padding-bottom: 100px; }
+        .tab-content { display: none; height: 100%; overflow-y: auto; padding-bottom: 140px; }
         .active-tab { display: block; }
         .recording { animation: pulse-red 1s infinite; color: #ff3e3e !important; border-color: #ff3e3e !important; }
         @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         audio { filter: invert(100%) hue-rotate(90deg) brightness(1.5); height: 35px; width: 100%; margin-top: 8px; }
-        button:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -27,7 +26,7 @@
             UNIT: OBSRVR-78
         </div>
         <div id="clock">00:00:00</div>
-        <div class="text-green-700 font-bold">SIGNAL: STABLE</div>
+        <div class="text-green-700 font-bold">LINK: SECURE</div>
     </header>
 
     <main class="flex-1 p-4 relative">
@@ -38,18 +37,18 @@
                     <h2 class="text-xs font-bold uppercase tracking-widest">Field Mission</h2>
                     <button onclick="generateMission()" class="text-[9px] border border-green-700 px-2 py-1">RECALIBRATE</button>
                 </div>
-                <p id="mission-text" class="text-lg italic leading-tight uppercase">Awaiting coordinates...</p>
+                <p id="mission-text" class="text-lg italic leading-tight uppercase">Scanning for tasks...</p>
             </div>
             
             <div class="hud-border bg-black/80 p-4 rounded-sm space-y-3">
-                <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Entry Node</h2>
-                <textarea id="log-input" placeholder="INPUT OBSERVATION DATA..." class="w-full bg-black border border-green-900 p-2 text-green-400 focus:outline-none h-20 text-sm"></textarea>
-                <button onclick="saveLog('TEXT')" class="w-full py-2 bg-green-900/20 border border-green-500 text-[10px] font-bold uppercase">Commit Text Archive</button>
+                <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Data Intake</h2>
+                <textarea id="log-input" placeholder="RECORD PHYSICAL REALITY..." class="w-full bg-black border border-green-900 p-2 text-green-400 focus:outline-none h-20 text-sm"></textarea>
+                <button onclick="saveLog('TEXT')" class="w-full py-2 bg-green-900/20 border border-green-500 text-[10px] font-bold uppercase">Archive Text</button>
                 
                 <div class="pt-2 border-t border-green-900">
                     <button id="record-btn" onclick="toggleRecording()" class="w-full py-3 border border-green-500 text-[10px] font-bold uppercase flex items-center justify-center gap-2">
                         <span id="record-icon" class="w-2 h-2 bg-green-500 rounded-full"></span>
-                        <span id="record-text">Initiate Voice Link</span>
+                        <span id="record-text">Voice Link Mode</span>
                     </button>
                 </div>
             </div>
@@ -57,26 +56,27 @@
 
         <section id="tab-vitals" class="tab-content space-y-6 text-center pt-4">
             <div class="hud-border bg-black/80 p-6 rounded-sm">
-                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2 mb-8">System Calibration</h2>
+                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2 mb-8">System Regulation</h2>
                 <div class="flex flex-col items-center justify-center space-y-8">
                     <div id="breath-node" class="w-32 h-32 rounded-full border-2 border-green-500 flex items-center justify-center transition-transform duration-[4000ms] linear">
-                        <div id="breath-label" class="text-[10px] uppercase font-bold">Idle</div>
+                        <div id="breath-label" class="text-[10px] uppercase font-bold">Ready</div>
                     </div>
                     <div class="w-full flex gap-2">
-                        <button id="breath-btn" onclick="startBreathing()" class="flex-1 py-3 border border-green-500 text-[10px] font-bold uppercase">Inhale Oxygen</button>
-                        <button id="halt-btn" onclick="haltBreathing()" class="hidden flex-1 py-3 border border-red-500 text-red-500 text-[10px] font-bold uppercase">Halt Calibration</button>
+                        <button id="breath-btn" onclick="startBreathing()" class="flex-1 py-3 border border-green-500 text-[10px] font-bold uppercase">Begin Inhale</button>
+                        <button id="halt-btn" onclick="haltBreathing()" class="hidden flex-1 py-3 border border-red-500 text-red-500 text-[10px] font-bold uppercase">Halt</button>
                     </div>
                 </div>
             </div>
-            <div class="p-4 border-l border-green-500 bg-green-900/10 italic text-sm">
-                <p id="mantra-display">"I am a guest in this space..."</p>
-            </div>
+            <p id="mantra-display" class="italic text-sm px-4">"I am a guest in this space..."</p>
         </section>
 
         <section id="tab-logs" class="tab-content space-y-4">
             <div class="flex justify-between items-center border-b border-green-900 pb-2">
-                <h2 class="text-xs font-bold uppercase">Extraction Archive</h2>
-                <button onclick="clearLogs()" class="text-[8px] text-red-800">PURGE ALL</button>
+                <h2 class="text-xs font-bold uppercase">Mission Archive</h2>
+                <div class="flex gap-4">
+                    <button onclick="exportAllText()" class="text-[8px] text-green-500 underline">EXPORT TEXT</button>
+                    <button onclick="clearLogs()" class="text-[8px] text-red-800">PURGE</button>
+                </div>
             </div>
             <div id="log-history" class="space-y-4"></div>
         </section>
@@ -86,64 +86,58 @@
             <div class="space-y-4 text-xs">
                 <div class="hud-border p-3 bg-green-900/5">
                     <span class="text-green-500 font-bold">[BEACON ADJUSTMENT]</span>
-                    <p class="mt-1 opacity-80 text-[11px]">Lock sensors onto a permanent structure. It is an independent constant. It ignores your presence.</p>
+                    <p class="mt-1 opacity-80 text-[11px]">Pick a structure you didn't build. Remind yourself: It does not know you exist. You are free to observe it without consequence.</p>
                 </div>
                 <div class="hud-border p-3 bg-green-900/5">
                     <span class="text-green-500 font-bold">[MECHANICAL STUBBORNNESS]</span>
-                    <p class="mt-1 opacity-80 text-[11px]">Grip your gear. Feel the physical density. Matter does not require your permission to be solid.</p>
-                </div>
-                <div class="hud-border p-3 bg-green-900/5 border-dashed">
-                    <span class="text-green-500 font-bold">[PHENOTYPE NOTE]</span>
-                    <p class="mt-1 opacity-80 text-[11px]">Your streamlined build (narrow shoulders, precise feet) is optimized for scouting. Local reactions are based on primitive perception.</p>
+                    <p class="mt-1 opacity-80 text-[11px]">Matter is stubborn. The weight of your Jansport is proof of a world that doesn't care about your imagination.</p>
                 </div>
             </div>
         </section>
     </main>
 
     <nav class="border-t border-green-900 bg-black flex justify-around p-3 pb-8 fixed bottom-0 w-full z-50">
-        <button onclick="switchTab('tab-dispatch')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100 focus:opacity-100">Dispatch</button>
-        <button onclick="switchTab('tab-vitals')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100 focus:opacity-100">Vitals</button>
-        <button onclick="switchTab('tab-logs')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100 focus:opacity-100">Logs</button>
-        <button onclick="switchTab('tab-mind')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100 focus:opacity-100">Protocols</button>
+        <button onclick="switchTab('tab-dispatch')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Dispatch</button>
+        <button onclick="switchTab('tab-vitals')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Vitals</button>
+        <button onclick="switchTab('tab-logs')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Logs</button>
+        <button onclick="switchTab('tab-mind')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Protocols</button>
     </nav>
 
     <script>
-        // ICON GENERATION
-        (function createFavicon() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 32; canvas.height = 32;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, 32, 32);
-            ctx.beginPath(); ctx.moveTo(16, 4); ctx.lineTo(28, 28); ctx.lineTo(4, 28); ctx.closePath();
+        // FAVICON
+        (function() {
+            const canvas = document.createElement('canvas'); canvas.width = 32; canvas.height = 32;
+            const ctx = canvas.getContext('2d'); ctx.fillStyle = '#050505'; ctx.fillRect(0,0,32,32);
+            ctx.beginPath(); ctx.moveTo(16,4); ctx.lineTo(28,28); ctx.lineTo(4,28); ctx.closePath();
             ctx.fillStyle = '#00ff41'; ctx.fill();
-            const link = document.createElement('link');
-            link.rel = 'icon'; link.href = canvas.toDataURL();
+            const link = document.createElement('link'); link.rel = 'icon'; link.href = canvas.toDataURL();
             document.head.appendChild(link);
         })();
 
         const missions = [
             "Document 3 objects colder than your skin.",
             "Identify an item of clothing a local likely regrets buying.",
-            "Record one 'Joy-Ping' (physical pleasure) from current environment.",
-            "Structural Audit: observe the shadow geometry of an independent object.",
-            "Audit mechanical stubbornness: apply pressure to your scooter or bag strap.",
-            "Identify an Independent Agenda: What mundane task is a stranger finishing?"
+            "Record one 'Joy-Ping' (aesthetic pleasure) from the environment.",
+            "Structural Audit: observe a shadow geometry you didn't create.",
+            "Apply pressure to gear: verify its physical density.",
+            "Audit an 'Independent Agenda': what mundane task is a local finishing?"
         ];
 
         const mantras = [
             "I am a guest in this space, not the creator of it.",
             "I did not create that tree; I did not create that laughter.",
-            "The Observer does not require local approval for the mission.",
-            "Reality is stubborn; it persists without my permission.",
-            "The buzz of anxiety is a sensory glitch, not a mission truth."
+            "The Observer does not require local approval.",
+            "Reality is stubborn; it persists without my permission."
         ];
 
         let mediaRecorder; let audioChunks = []; let breathInterval;
+        const STORAGE_KEY = 'obs78_vault_v3';
 
         function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             document.getElementById(id).style.display = 'block';
             if(id === 'tab-vitals') document.getElementById('mantra-display').innerText = mantras[Math.floor(Math.random() * mantras.length)];
+            if(id === 'tab-logs') renderLogs();
         }
 
         function generateMission() {
@@ -170,39 +164,73 @@
                     mediaRecorder.start();
                     btn.classList.add('recording');
                     icon.classList.replace('bg-green-500', 'bg-red-500');
-                    text.innerText = "LINK ACTIVE... RECORDING";
-                } catch (err) { alert("Microphone access denied."); }
+                    text.innerText = "RECORDING...";
+                } catch (err) { alert("Mic access required."); }
             } else {
                 mediaRecorder.stop();
                 btn.classList.remove('recording');
                 icon.classList.replace('bg-red-500', 'bg-green-500');
-                text.innerText = "Initiate Voice Link";
+                text.innerText = "Voice Link Mode";
             }
         }
 
         function saveLog(type, data = null) {
-            const text = document.getElementById('log-input').value;
-            const log = { type, text: type === 'TEXT' ? text : '[VOICE_LOG_EXTRACTED]', audio: data, date: new Date().toLocaleString(), id: Date.now() };
-            const history = JSON.parse(localStorage.getItem('obs78_logs') || '[]');
-            history.unshift(log);
-            localStorage.setItem('obs78_logs', JSON.stringify(history));
-            document.getElementById('log-input').value = '';
+            const input = document.getElementById('log-input');
+            const newEntry = {
+                type,
+                text: type === 'TEXT' ? input.value : '[VOICE_LOG]',
+                audio: data,
+                date: new Date().toLocaleString(),
+                id: Date.now()
+            };
+            const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            history.unshift(newEntry);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+            input.value = '';
             renderLogs();
             if(type === 'VOICE') switchTab('tab-logs');
         }
 
         function renderLogs() {
-            const history = JSON.parse(localStorage.getItem('obs78_logs') || '[]');
-            document.getElementById('log-history').innerHTML = history.map(l => `
-                <div class="border-l-2 border-green-800 bg-green-900/5 p-3 text-xs">
+            const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const container = document.getElementById('log-history');
+            container.innerHTML = history.map(l => `
+                <div class="border-l-2 border-green-800 bg-green-900/5 p-3 text-xs mb-3">
                     <div class="flex justify-between opacity-40 text-[8px] mb-2 uppercase font-bold">
                         <span>${l.date}</span>
-                        <span>[${l.type}_EXTRACT]</span>
+                        <button onclick="exportSingle('${l.id}')" class="text-green-500 underline">[SAVE_TO_FILES]</button>
                     </div>
-                    <p class="text-green-300 mb-2">${l.text}</p>
+                    <p class="text-green-300">${l.text}</p>
                     ${l.audio ? `<audio controls src="${l.audio}"></audio>` : ''}
                 </div>
             `).join('');
+        }
+
+        function exportSingle(id) {
+            const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const entry = history.find(l => l.id == id);
+            if (!entry) return;
+
+            const link = document.createElement('a');
+            if (entry.type === 'VOICE') {
+                link.href = entry.audio;
+                link.download = `OBS78_VOICE_${id}.webm`;
+            } else {
+                const blob = new Blob([entry.text], { type: 'text/plain' });
+                link.href = URL.createObjectURL(blob);
+                link.download = `OBS78_TEXT_${id}.txt`;
+            }
+            link.click();
+        }
+
+        function exportAllText() {
+            const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const allText = history.filter(l => l.type === 'TEXT').map(l => `[${l.date}]\n${l.text}\n---`).join('\n\n');
+            const blob = new Blob([allText], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `OBS78_MASTER_LOG.txt`;
+            link.click();
         }
 
         function startBreathing() {
@@ -223,13 +251,12 @@
         function haltBreathing() {
             clearInterval(breathInterval);
             document.getElementById('breath-node').style.transform = 'scale(1)';
-            document.getElementById('breath-label').innerText = "Idle";
+            document.getElementById('breath-label').innerText = "Ready";
             document.getElementById('breath-btn').classList.remove('hidden');
             document.getElementById('halt-btn').classList.add('hidden');
         }
 
-        function clearLogs() { if(confirm("PURGE ALL DATA?")) { localStorage.removeItem('obs78_logs'); renderLogs(); } }
-
+        function clearLogs() { if(confirm("PURGE ALL DATA?")) { localStorage.removeItem(STORAGE_KEY); renderLogs(); } }
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
         window.onload = () => { generateMission(); renderLogs(); };
     </script>
