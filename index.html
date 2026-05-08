@@ -10,21 +10,26 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         body { font-family: 'JetBrains+Mono', monospace; background-color: #050505; color: #00ff41; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .hud-border { border: 1px solid #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.1); }
-        .scanline { background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 100; position: fixed; inset: 0; }
-        .tab-content { display: none; height: 100%; overflow-y: auto; padding-bottom: 140px; }
-        .active-tab { display: block; }
-        .recording { animation: pulse-red 1s infinite; color: #ff3e3e !important; border-color: #ff3e3e !important; }
-        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .hud-border { border: 1px solid #00ff41; box-shadow: 0 0 15px rgba(0, 255, 65, 0.15); background: rgba(0, 20, 0, 0.2); }
+        .scanline { background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(0, 255, 0, 0.03), rgba(0, 255, 0, 0.01)); background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 100; position: fixed; inset: 0; }
+        .tab-content { display: none; height: 100%; overflow-y: auto; padding-bottom: 160px; }
+        .active-tab { display: flex; flex-direction: column; }
         
-        /* Hypnotic Tunnel Styles */
-        .tunnel-container { width: 150px; height: 150px; perspective: 1000px; display: none; }
-        .tunnel-ring { border: 2px solid #00ff41; border-radius: 50%; position: absolute; top: 0; left: 0; right: 0; bottom: 0; animation: tunnel-spin 3s infinite linear; opacity: 0.5; }
-        @keyframes tunnel-spin { 
-            0% { transform: translateZ(-200px) rotate(0deg); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateZ(200px) rotate(360deg); opacity: 0; }
+        /* INFINITY TUNNEL */
+        .tunnel-container { width: 220px; height: 220px; perspective: 600px; display: none; position: relative; }
+        .tunnel-ring { border: 1.5px solid #00ff41; border-radius: 50%; position: absolute; top: 0; left: 0; right: 0; bottom: 0; animation: tunnel-flow 4s infinite linear; opacity: 0; }
+        @keyframes tunnel-flow {
+            0% { transform: scale(0.1) translateZ(-500px); opacity: 0; }
+            20% { opacity: 0.8; }
+            100% { transform: scale(2.5) translateZ(500px); opacity: 0; }
         }
+
+        /* DECORATIVE DIALS */
+        .rotating-dial { border: 1px dashed #004411; border-radius: 50%; animation: spin 10s infinite linear; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .wave-line { height: 2px; background: #00ff41; opacity: 0.3; width: 100%; animation: wave 2s infinite ease-in-out; }
+        @keyframes wave { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(4); } }
+        
         audio { filter: invert(100%) hue-rotate(90deg) brightness(1.5); height: 35px; width: 100%; margin-top: 8px; }
     </style>
 </head>
@@ -33,77 +38,104 @@
 
     <header class="p-3 border-b border-green-900 flex justify-between items-center text-[10px] uppercase">
         <div class="flex items-center gap-2">
-            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#00ff41]"></span>
             UNIT: OBSRVR-78
         </div>
         <div id="clock">00:00:00</div>
-        <div class="text-green-700 font-bold font-mono">STATUS: OPTIMAL</div>
+        <div class="text-green-800">BUFFER: 98%</div>
     </header>
 
     <main class="flex-1 p-4 relative overflow-hidden">
         
-        <section id="tab-dispatch" class="tab-content active-tab space-y-4">
-            <div class="hud-border bg-black/80 p-4 rounded-sm">
+        <section id="tab-dispatch" class="tab-content active-tab space-y-4 h-full">
+            <div class="hud-border p-4 rounded-sm">
                 <div class="flex justify-between items-center border-b border-green-900 pb-2 mb-3">
                     <h2 class="text-xs font-bold uppercase tracking-widest">Field Mission</h2>
-                    <button onclick="generateMission()" class="text-[9px] border border-green-700 px-2 py-1">RECALIBRATE</button>
+                    <button onclick="generateMission()" class="text-[9px] border border-green-700 px-2 py-1 active:bg-green-900">RECALIBRATE</button>
                 </div>
-                <p id="mission-text" class="text-lg italic leading-tight uppercase">Initializing...</p>
+                <p id="mission-text" class="text-lg italic leading-tight uppercase min-h-[60px]">...</p>
             </div>
             
-            <div class="hud-border bg-black/80 p-4 rounded-sm space-y-3">
+            <div class="hud-border p-4 rounded-sm flex-1 flex flex-col space-y-3">
                 <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Entry Node</h2>
-                <textarea id="log-input" placeholder="RECORD FIELD DATA..." class="w-full bg-black border border-green-900 p-2 text-green-400 focus:outline-none h-20 text-sm"></textarea>
-                <button onclick="saveLog('TEXT')" class="w-full py-2 bg-green-900/40 border border-green-500 text-[10px] font-bold uppercase">Commit Archive</button>
-                <button id="record-btn" onclick="toggleRecording()" class="w-full py-3 border border-green-500 text-[10px] font-bold uppercase flex items-center justify-center gap-2">
-                    <span id="record-icon" class="w-2 h-2 bg-green-500 rounded-full"></span>
-                    <span id="record-text">Voice Link Mode</span>
-                </button>
+                <textarea id="log-input" placeholder="RECORD FIELD DATA..." class="flex-1 w-full bg-black/40 border border-green-900 p-3 text-green-400 focus:outline-none text-sm"></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="saveLog('TEXT')" class="py-3 bg-green-900/40 border border-green-500 text-[10px] font-bold uppercase">Commit Text</button>
+                    <button id="record-btn" onclick="toggleRecording()" class="py-3 border border-green-500 text-[10px] font-bold uppercase flex items-center justify-center gap-2">
+                        <span id="record-icon" class="w-2 h-2 bg-green-500 rounded-full"></span>
+                        <span id="record-text">Voice Link</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="h-16 flex items-center justify-around opacity-40">
+                <div class="w-10 h-10 rotating-dial relative flex items-center justify-center">
+                    <div class="w-1 h-4 bg-green-900"></div>
+                </div>
+                <div class="flex-1 px-4 space-y-1">
+                    <div class="wave-line"></div>
+                    <div class="text-[8px] text-center tracking-tighter uppercase">Scanning Environment Resonance...</div>
+                </div>
+                <div class="w-10 h-10 rotating-dial" style="animation-direction: reverse;"></div>
             </div>
         </section>
 
-        <section id="tab-vitals" class="tab-content space-y-6 text-center pt-2">
-            <div class="hud-border bg-black/80 p-6 rounded-sm space-y-4">
-                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2">System Regulation</h2>
+        <section id="tab-vitals" class="tab-content space-y-6 text-center pt-2 h-full">
+            <div class="hud-border p-6 rounded-sm flex-1 flex flex-col items-center justify-center space-y-8">
+                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2 w-full">Regulation HUD</h2>
                 
-                <div id="breath-node" class="w-24 h-24 mx-auto rounded-full border-2 border-green-500 flex items-center justify-center transition-transform duration-[4000ms] linear">
-                    <div id="breath-label" class="text-[8px] uppercase font-bold">Respiration</div>
+                <div id="breath-node" class="w-32 h-32 rounded-full border-2 border-green-500 flex items-center justify-center transition-transform duration-[4000ms] linear relative">
+                    <div id="breath-label" class="text-[10px] uppercase font-bold">Stable</div>
+                    <div class="absolute -inset-4 border border-green-900/30 rounded-full rotating-dial"></div>
                 </div>
 
-                <div id="recal-container" class="tunnel-container mx-auto relative overflow-hidden">
-                    <div class="tunnel-ring" style="animation-delay: 0s"></div>
-                    <div class="tunnel-ring" style="animation-delay: 1s"></div>
-                    <div class="tunnel-ring" style="animation-delay: 2s"></div>
+                <div id="recal-container" class="tunnel-container">
+                    <div class="tunnel-ring" style="animation-delay: 0.0s"></div>
+                    <div class="tunnel-ring" style="animation-delay: 0.8s"></div>
+                    <div class="tunnel-ring" style="animation-delay: 1.6s"></div>
+                    <div class="tunnel-ring" style="animation-delay: 2.4s"></div>
+                    <div class="tunnel-ring" style="animation-delay: 3.2s"></div>
                 </div>
 
-                <div class="flex flex-col gap-2 pt-2">
-                    <button id="breath-btn" onclick="startBreathing()" class="w-full py-2 border border-green-500 text-[10px] font-bold uppercase">Begin Respiration</button>
-                    <button id="recal-btn" onclick="startRecalibration()" class="w-full py-2 border border-green-500 text-[10px] font-bold uppercase">TUNE OUT (RECALIBRATE)</button>
-                    <button id="halt-btn" onclick="haltSystems()" class="hidden w-full py-2 border border-red-500 text-red-500 text-[10px] font-bold uppercase">Stop All Links</button>
+                <div class="w-full space-y-2">
+                    <button id="breath-btn" onclick="startBreathing()" class="w-full py-4 border border-green-500 text-[10px] font-bold uppercase">Begin Respiration</button>
+                    <button id="recal-btn" onclick="startRecalibration()" class="w-full py-4 border border-green-500 text-[10px] font-bold uppercase">Tune Out (Recalibrate)</button>
+                    <button id="halt-btn" onclick="haltSystems()" class="hidden w-full py-4 border border-red-500 text-red-500 text-[10px] font-bold uppercase">Abort Session</button>
                 </div>
             </div>
-            <p id="mantra-display" class="italic text-[11px] px-6">"I am a guest in this space..."</p>
+            <div class="p-4 bg-green-900/10 border-t border-b border-green-800 italic text-[11px] opacity-70">
+                <p id="mantra-display">"I am a guest in this space..."</p>
+            </div>
         </section>
 
-        <section id="tab-logs" class="tab-content space-y-4">
+        <section id="tab-logs" class="tab-content space-y-4 h-full">
             <div class="flex justify-between items-center border-b border-green-900 pb-2">
-                <h2 class="text-xs font-bold uppercase">Archive</h2>
-                <button onclick="clearLogs()" class="text-[8px] text-red-800">PURGE</button>
+                <h2 class="text-xs font-bold uppercase">Extraction Archive</h2>
+                <button onclick="clearLogs()" class="text-[8px] text-red-800">WIPE ALL</button>
             </div>
-            <div id="log-history" class="space-y-4"></div>
+            <div id="log-history" class="space-y-4 flex-1"></div>
         </section>
 
-        <section id="tab-mind" class="tab-content space-y-4">
-            <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Protocols</h2>
-            <div class="space-y-3 text-[10px] opacity-80">
-                <p>[BEACON] Lock sensors on a structure you didn't build. It exists without you.</p>
-                <p>[STUBBORNNESS] Gripping gear proves density. Reality ignores your anxiety.</p>
-                <p>[PHENOTYPE] Your build is optimized for scouting. Primitive locals react to what they can't understand.</p>
+        <section id="tab-mind" class="tab-content space-y-4 h-full">
+            <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Observer Meta-Data</h2>
+            <div class="space-y-4 text-[10px] opacity-60">
+                <div class="border-l-2 border-green-900 pl-4 py-2">
+                    <span class="text-green-500 font-bold block mb-1">REALITY_ANCHOR:</span>
+                    Pick a distant constant. It existed before your biological entry and will persist post-exit.
+                </div>
+                <div class="border-l-2 border-green-900 pl-4 py-2">
+                    <span class="text-green-500 font-bold block mb-1">STUBBORN_MATTER:</span>
+                    Grip a physical tool. Acknowledge its refusal to be affected by internal cognition.
+                </div>
+                <div class="border-l-2 border-green-900 pl-4 py-2">
+                    <span class="text-green-500 font-bold block mb-1">SCOUT_OPTIMIZATION:</span>
+                    Your streamlined phenotype is an intentional design. Local reactions are external interference only.
+                </div>
             </div>
         </section>
     </main>
 
-    <nav class="border-t border-green-900 bg-black flex justify-around p-3 pb-8 fixed bottom-0 w-full z-50">
+    <nav class="border-t border-green-900 bg-black flex justify-around p-3 pb-10 fixed bottom-0 w-full z-50">
         <button onclick="switchTab('tab-dispatch')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Dispatch</button>
         <button onclick="switchTab('tab-vitals')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Vitals</button>
         <button onclick="switchTab('tab-logs')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Logs</button>
@@ -111,14 +143,13 @@
     </nav>
 
     <script>
-        // ICON FIX: Generates and sets icons for Apple Home Screen
-        (function setIcons() {
+        // ICON SCRIPT
+        (function() {
             const canvas = document.createElement('canvas'); canvas.width = 180; canvas.height = 180;
             const ctx = canvas.getContext('2d'); ctx.fillStyle = '#050505'; ctx.fillRect(0,0,180,180);
-            ctx.beginPath(); ctx.moveTo(90, 30); ctx.lineTo(150, 140); ctx.lineTo(30, 140); ctx.closePath();
+            ctx.beginPath(); ctx.moveTo(90,30); ctx.lineTo(150,140); ctx.lineTo(30,140); ctx.closePath();
             ctx.fillStyle = '#00ff41'; ctx.fill();
             const url = canvas.toDataURL();
-            
             const link = document.createElement('link'); link.rel = 'icon'; link.href = url; document.head.appendChild(link);
             const apple = document.createElement('link'); apple.rel = 'apple-touch-icon'; apple.href = url; document.head.appendChild(apple);
         })();
@@ -127,19 +158,20 @@
             "Document 3 objects colder than your skin.",
             "Record one 'Joy-Ping' (aesthetic pleasure) from the environment.",
             "Structural Audit: observe a shadow geometry you didn't create.",
-            "Apply pressure to gear: verify its physical density."
+            "Apply pressure to gear: verify its physical density.",
+            "Scan strangers: identify their mundane local mission."
         ];
-        const mantras = ["I am a guest in this space...", "Reality is stubborn; it persists without me.", "Anxiety is a sensory glitch."];
+        const mantras = ["I am a guest in this space.", "Reality is stubborn; it persists without me.", "Phenotype optimized for field research."];
 
         let mediaRecorder; let audioChunks = []; let breathInterval;
-        const STORAGE_KEY = 'obs78_v5_final';
+        const STORAGE_KEY = 'obs78_v6_final';
 
         function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.getElementById(id).style.display = 'block';
+            document.getElementById(id).style.display = 'flex';
             if(id === 'tab-vitals') {
                 document.getElementById('mantra-display').innerText = mantras[Math.floor(Math.random() * mantras.length)];
-                haltSystems(); // Ensure reset when entering tab
+                haltSystems();
             }
             if(id === 'tab-logs') renderLogs();
         }
@@ -162,12 +194,12 @@
                     };
                     mediaRecorder.start();
                     btn.classList.add('recording');
-                    document.getElementById('record-text').innerText = "RECORDING...";
+                    document.getElementById('record-text').innerText = "LINKING...";
                 } catch (err) { alert("Mic required."); }
             } else {
                 mediaRecorder.stop();
                 btn.classList.remove('recording');
-                document.getElementById('record-text').innerText = "Voice Link Mode";
+                document.getElementById('record-text').innerText = "Voice Link";
             }
         }
 
@@ -186,7 +218,7 @@
                 <div class="border-l-2 border-green-800 bg-green-900/5 p-3 text-xs mb-3">
                     <div class="flex justify-between opacity-40 text-[7px] uppercase font-bold mb-1">
                         <span>${l.date}</span>
-                        <button onclick="shareEntry('${l.id}')" class="text-green-500 underline">SHARE</button>
+                        <button onclick="shareEntry('${l.id}')" class="text-green-500 underline">EXTRACT</button>
                     </div>
                     <p class="text-green-300">${l.text}</p>
                     ${l.audio ? `<audio controls playsinline src="${l.audio}"></audio>` : ''}
@@ -206,6 +238,7 @@
         function startBreathing() {
             haltSystems();
             document.getElementById('breath-node').style.display = 'flex';
+            document.getElementById('recal-container').style.display = 'none';
             document.getElementById('halt-btn').classList.remove('hidden');
             let i = 0; const ph = ["Inhale", "Hold", "Exhale", "Hold"];
             const cycle = () => {
@@ -221,7 +254,7 @@
             document.getElementById('recal-container').style.display = 'block';
             document.getElementById('breath-node').style.display = 'none';
             document.getElementById('halt-btn').classList.remove('hidden');
-            setTimeout(haltSystems, 30000); // Auto-stop after 30s
+            setTimeout(haltSystems, 30000);
         }
 
         function haltSystems() {
