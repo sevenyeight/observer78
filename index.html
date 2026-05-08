@@ -3,205 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Observer HUD v2.0</title>
+    <title>OBSRVR-78</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        body { font-family: 'JetBrains+Mono', monospace; background-color: #050505; color: #00ff41; height: 100vh; display: flex; flex-direction: column; }
+        body { font-family: 'JetBrains+Mono', monospace; background-color: #050505; color: #00ff41; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .hud-border { border: 1px solid #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.1); }
         .scanline { background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 100; position: fixed; inset: 0; }
-        .tab-content { display: none; height: 100%; overflow-y: auto; }
+        .tab-content { display: none; height: 100%; overflow-y: auto; padding-bottom: 100px; }
         .active-tab { display: block; }
-        .breath-node { transition: transform 4s linear; }
+        .recording { animation: pulse-red 1s infinite; color: #ff3e3e !important; border-color: #ff3e3e !important; }
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        audio { filter: invert(100%) hue-rotate(90deg) brightness(1.5); height: 35px; width: 100%; margin-top: 8px; }
+        button:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
     <div class="scanline"></div>
 
-    <header class="p-3 border-b border-green-900 flex justify-between items-center text-[10px] uppercase">
+    <header class="p-3 border-b border-green-900 flex justify-between items-center text-[10px] uppercase tracking-tighter">
         <div class="flex items-center gap-2">
             <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            ID: OBSERVER_78
+            UNIT: OBSRVR-78
         </div>
         <div id="clock">00:00:00</div>
-        <div class="text-green-700">LINK_STABLE</div>
+        <div class="text-green-700 font-bold">SIGNAL: STABLE</div>
     </header>
 
-    <main class="flex-1 p-4 relative overflow-hidden">
+    <main class="flex-1 p-4 relative">
         
-        <section id="tab-dispatch" class="tab-content active-tab space-y-6">
+        <section id="tab-dispatch" class="tab-content active-tab space-y-4">
             <div class="hud-border bg-black/80 p-4 rounded-sm">
                 <div class="flex justify-between items-center border-b border-green-900 pb-2 mb-3">
                     <h2 class="text-xs font-bold uppercase tracking-widest">Field Mission</h2>
                     <button onclick="generateMission()" class="text-[9px] border border-green-700 px-2 py-1">RECALIBRATE</button>
                 </div>
-                <p id="mission-text" class="text-lg italic leading-tight uppercase">Loading local data...</p>
+                <p id="mission-text" class="text-lg italic leading-tight uppercase">Awaiting coordinates...</p>
             </div>
             
-            <div class="hud-border bg-black/80 p-4 rounded-sm">
-                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2 mb-3">New Entry</h2>
-                <textarea id="log-input" placeholder="RECORD FIELD DATA..." class="w-full bg-black border border-green-900 p-2 text-green-400 focus:outline-none h-24 text-sm mb-2"></textarea>
-                <div class="flex gap-2">
-                    <button onclick="saveLog('TEXT')" class="flex-1 py-2 bg-green-900/40 border border-green-500 text-[10px] font-bold uppercase hover:bg-green-700">Commit Text</button>
-                    <button onclick="simulateVoice()" class="flex-1 py-2 bg-green-900/40 border border-green-500 text-[10px] font-bold uppercase hover:bg-green-700">Voice Link</button>
+            <div class="hud-border bg-black/80 p-4 rounded-sm space-y-3">
+                <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Entry Node</h2>
+                <textarea id="log-input" placeholder="INPUT OBSERVATION DATA..." class="w-full bg-black border border-green-900 p-2 text-green-400 focus:outline-none h-20 text-sm"></textarea>
+                <button onclick="saveLog('TEXT')" class="w-full py-2 bg-green-900/20 border border-green-500 text-[10px] font-bold uppercase">Commit Text Archive</button>
+                
+                <div class="pt-2 border-t border-green-900">
+                    <button id="record-btn" onclick="toggleRecording()" class="w-full py-3 border border-green-500 text-[10px] font-bold uppercase flex items-center justify-center gap-2">
+                        <span id="record-icon" class="w-2 h-2 bg-green-500 rounded-full"></span>
+                        <span id="record-text">Initiate Voice Link</span>
+                    </button>
                 </div>
             </div>
         </section>
 
-        <section id="tab-vitals" class="tab-content space-y-6 text-center">
-            <div class="hud-border bg-black/80 p-4 rounded-sm">
-                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2 mb-6">Internal Respiration</h2>
-                <div class="flex flex-col items-center justify-center space-y-8 py-4">
-                    <div id="breath-node" class="w-32 h-32 rounded-full border-2 border-green-500 flex items-center justify-center">
-                        <div id="breath-label" class="text-[10px] uppercase font-bold">Standby</div>
+        <section id="tab-vitals" class="tab-content space-y-6 text-center pt-4">
+            <div class="hud-border bg-black/80 p-6 rounded-sm">
+                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2 mb-8">System Calibration</h2>
+                <div class="flex flex-col items-center justify-center space-y-8">
+                    <div id="breath-node" class="w-32 h-32 rounded-full border-2 border-green-500 flex items-center justify-center transition-transform duration-[4000ms] linear">
+                        <div id="breath-label" class="text-[10px] uppercase font-bold">Idle</div>
                     </div>
                     <div class="w-full flex gap-2">
-                        <button id="breath-btn" onclick="startBreathing()" class="flex-1 py-2 border border-green-500 text-[10px] font-bold uppercase">Begin Cycle</button>
-                        <button id="halt-btn" onclick="haltBreathing()" class="hidden flex-1 py-2 border border-red-500 text-red-500 text-[10px] font-bold uppercase">Halt Calibration</button>
+                        <button id="breath-btn" onclick="startBreathing()" class="flex-1 py-3 border border-green-500 text-[10px] font-bold uppercase">Inhale Oxygen</button>
+                        <button id="halt-btn" onclick="haltBreathing()" class="hidden flex-1 py-3 border border-red-500 text-red-500 text-[10px] font-bold uppercase">Halt Calibration</button>
                     </div>
                 </div>
             </div>
-            <div class="hud-border bg-black/80 p-4 rounded-sm italic">
-                <p id="mantra-display" class="text-sm">"I am a guest in this space, not the creator of it."</p>
+            <div class="p-4 border-l border-green-500 bg-green-900/10 italic text-sm">
+                <p id="mantra-display">"I am a guest in this space..."</p>
             </div>
         </section>
 
         <section id="tab-logs" class="tab-content space-y-4">
-            <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Mission History</h2>
-            <div id="log-history" class="space-y-3"></div>
+            <div class="flex justify-between items-center border-b border-green-900 pb-2">
+                <h2 class="text-xs font-bold uppercase">Extraction Archive</h2>
+                <button onclick="clearLogs()" class="text-[8px] text-red-800">PURGE ALL</button>
+            </div>
+            <div id="log-history" class="space-y-4"></div>
         </section>
 
         <section id="tab-mind" class="tab-content space-y-4">
-            <div class="hud-border bg-black/80 p-4 rounded-sm space-y-4">
-                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2">Technical Grounding</h2>
-                <div class="space-y-4 text-xs">
-                    <div>
-                        <span class="text-green-500 font-bold block">[BEACON ADJUSTMENT]</span>
-                        Find a fixed external object (a lighthouse, a pier, a mountain). Focus on its distance. Remind yourself it was there before you arrived and will be there after you depart.
-                    </div>
-                    <div>
-                        <span class="text-green-500 font-bold block">[MECHANICAL STUBBORNESS]</span>
-                        Hold your scooter handle or bag strap. Feel the resistance of the material. It does not care about your thoughts. It is "stubborn" reality.
-                    </div>
-                    <div>
-                        <span class="text-green-500 font-bold block">[UNPREDICTABLE INPUT]</span>
-                        Find one movement you did not cause. A bird landing, a wave, or wind. This is evidence of a world outside your control[cite: 3].
-                    </div>
+            <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Observer Protocols</h2>
+            <div class="space-y-4 text-xs">
+                <div class="hud-border p-3 bg-green-900/5">
+                    <span class="text-green-500 font-bold">[BEACON ADJUSTMENT]</span>
+                    <p class="mt-1 opacity-80 text-[11px]">Lock sensors onto a permanent structure. It is an independent constant. It ignores your presence.</p>
+                </div>
+                <div class="hud-border p-3 bg-green-900/5">
+                    <span class="text-green-500 font-bold">[MECHANICAL STUBBORNNESS]</span>
+                    <p class="mt-1 opacity-80 text-[11px]">Grip your gear. Feel the physical density. Matter does not require your permission to be solid.</p>
+                </div>
+                <div class="hud-border p-3 bg-green-900/5 border-dashed">
+                    <span class="text-green-500 font-bold">[PHENOTYPE NOTE]</span>
+                    <p class="mt-1 opacity-80 text-[11px]">Your streamlined build (narrow shoulders, precise feet) is optimized for scouting. Local reactions are based on primitive perception.</p>
                 </div>
             </div>
         </section>
-
     </main>
 
-    <nav class="border-t border-green-900 bg-black flex justify-around p-3 pb-6">
-        <button onclick="switchTab('tab-dispatch')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Dispatch</button>
-        <button onclick="switchTab('tab-vitals')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Vitals</button>
-        <button onclick="switchTab('tab-logs')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Logs</button>
-        <button onclick="switchTab('tab-mind')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Protocols</button>
+    <nav class="border-t border-green-900 bg-black flex justify-around p-3 pb-8 fixed bottom-0 w-full z-50">
+        <button onclick="switchTab('tab-dispatch')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100 focus:opacity-100">Dispatch</button>
+        <button onclick="switchTab('tab-vitals')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100 focus:opacity-100">Vitals</button>
+        <button onclick="switchTab('tab-logs')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100 focus:opacity-100">Logs</button>
+        <button onclick="switchTab('tab-mind')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100 focus:opacity-100">Protocols</button>
     </nav>
 
     <script>
+        // ICON GENERATION
+        (function createFavicon() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32; canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, 32, 32);
+            ctx.beginPath(); ctx.moveTo(16, 4); ctx.lineTo(28, 28); ctx.lineTo(4, 28); ctx.closePath();
+            ctx.fillStyle = '#00ff41'; ctx.fill();
+            const link = document.createElement('link');
+            link.rel = 'icon'; link.href = canvas.toDataURL();
+            document.head.appendChild(link);
+        })();
+
         const missions = [
             "Document 3 objects colder than your skin.",
-            "Identify an item of clothing a stranger likely regrets buying.",
-            "Record one 'Joy-Ping' from the current environment.",
-            "Check structural integrity: observe the geometry of a local shadow[cite: 1].",
-            "Identify an independent agenda: what mundane task is a local stranger completing?",
-            "Audit tactile resistance: feel the mechanical stubbornness of your gear."
+            "Identify an item of clothing a local likely regrets buying.",
+            "Record one 'Joy-Ping' (physical pleasure) from current environment.",
+            "Structural Audit: observe the shadow geometry of an independent object.",
+            "Audit mechanical stubbornness: apply pressure to your scooter or bag strap.",
+            "Identify an Independent Agenda: What mundane task is a stranger finishing?"
         ];
 
         const mantras = [
             "I am a guest in this space, not the creator of it.",
-            "If I didn't create that tree, I didn't create that laughter. It belongs to them.",
-            "Reality is pushing back today; this is proof I am not alone[cite: 3].",
-            "The Observer does not require the locals' approval to complete the mission."
+            "I did not create that tree; I did not create that laughter.",
+            "The Observer does not require local approval for the mission.",
+            "Reality is stubborn; it persists without my permission.",
+            "The buzz of anxiety is a sensory glitch, not a mission truth."
         ];
 
-        let breathTimer;
+        let mediaRecorder; let audioChunks = []; let breathInterval;
 
         function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             document.getElementById(id).style.display = 'block';
-            if(id === 'tab-vitals') {
-                document.getElementById('mantra-display').innerText = mantras[Math.floor(Math.random() * mantras.length)];
-            }
+            if(id === 'tab-vitals') document.getElementById('mantra-display').innerText = mantras[Math.floor(Math.random() * mantras.length)];
         }
 
         function generateMission() {
             document.getElementById('mission-text').innerText = missions[Math.floor(Math.random() * missions.length)];
         }
 
-        function startBreathing() {
-            const node = document.getElementById('breath-node');
-            const label = document.getElementById('breath-label');
-            const btn = document.getElementById('breath-btn');
-            const haltBtn = document.getElementById('halt-btn');
-            
-            btn.classList.add('hidden');
-            haltBtn.classList.remove('hidden');
+        async function toggleRecording() {
+            const btn = document.getElementById('record-btn');
+            const icon = document.getElementById('record-icon');
+            const text = document.getElementById('record-text');
 
-            let cycle = 0;
-            const phases = [
-                { text: 'Inhale', scale: '1.5', time: 4000 },
-                { text: 'Hold', scale: '1.5', time: 4000 },
-                { text: 'Exhale', scale: '1.0', time: 4000 },
-                { text: 'Hold', scale: '1.0', time: 4000 }
-            ];
-
-            function run() {
-                const p = phases[cycle % 4];
-                label.innerText = p.text;
-                node.style.transform = `scale(${p.scale})`;
-                cycle++;
-                breathTimer = setTimeout(run, 4000);
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = () => saveLog('VOICE', reader.result);
+                    };
+                    mediaRecorder.start();
+                    btn.classList.add('recording');
+                    icon.classList.replace('bg-green-500', 'bg-red-500');
+                    text.innerText = "LINK ACTIVE... RECORDING";
+                } catch (err) { alert("Microphone access denied."); }
+            } else {
+                mediaRecorder.stop();
+                btn.classList.remove('recording');
+                icon.classList.replace('bg-red-500', 'bg-green-500');
+                text.innerText = "Initiate Voice Link";
             }
-            run();
         }
 
-        function haltBreathing() {
-            clearTimeout(breathTimer);
-            const node = document.getElementById('breath-node');
-            const label = document.getElementById('breath-label');
-            node.style.transform = `scale(1.0)`;
-            label.innerText = "Standby";
-            document.getElementById('breath-btn').classList.remove('hidden');
-            document.getElementById('halt-btn').classList.add('hidden');
-        }
-
-        function saveLog(type) {
-            const val = document.getElementById('log-input').value;
-            if(!val) return;
-            const log = { text: val, type: type, date: new Date().toLocaleString() };
-            const history = JSON.parse(localStorage.getItem('obs_logs_v2') || '[]');
+        function saveLog(type, data = null) {
+            const text = document.getElementById('log-input').value;
+            const log = { type, text: type === 'TEXT' ? text : '[VOICE_LOG_EXTRACTED]', audio: data, date: new Date().toLocaleString(), id: Date.now() };
+            const history = JSON.parse(localStorage.getItem('obs78_logs') || '[]');
             history.unshift(log);
-            localStorage.setItem('obs_logs_v2', JSON.stringify(history));
+            localStorage.setItem('obs78_logs', JSON.stringify(history));
             document.getElementById('log-input').value = '';
             renderLogs();
-            switchTab('tab-logs');
-        }
-
-        function simulateVoice() {
-            document.getElementById('log-input').value = "[VOICE_TRANSCRIPT]: " + document.getElementById('log-input').value;
-            saveLog('VOICE');
+            if(type === 'VOICE') switchTab('tab-logs');
         }
 
         function renderLogs() {
-            const history = JSON.parse(localStorage.getItem('obs_logs_v2') || '[]');
+            const history = JSON.parse(localStorage.getItem('obs78_logs') || '[]');
             document.getElementById('log-history').innerHTML = history.map(l => `
-                <div class="border-l border-green-800 bg-green-900/5 p-2 text-xs">
-                    <div class="flex justify-between opacity-50 mb-1 text-[8px]">
+                <div class="border-l-2 border-green-800 bg-green-900/5 p-3 text-xs">
+                    <div class="flex justify-between opacity-40 text-[8px] mb-2 uppercase font-bold">
                         <span>${l.date}</span>
-                        <span>[${l.type}]</span>
+                        <span>[${l.type}_EXTRACT]</span>
                     </div>
-                    <p class="${l.type === 'VOICE' ? 'text-green-200' : 'text-green-400'}">${l.text}</p>
+                    <p class="text-green-300 mb-2">${l.text}</p>
+                    ${l.audio ? `<audio controls src="${l.audio}"></audio>` : ''}
                 </div>
             `).join('');
         }
 
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-        }, 1000);
+        function startBreathing() {
+            const node = document.getElementById('breath-node');
+            const label = document.getElementById('breath-label');
+            const phases = ["Inhale", "Hold", "Exhale", "Hold"];
+            let i = 0;
+            document.getElementById('breath-btn').classList.add('hidden');
+            document.getElementById('halt-btn').classList.remove('hidden');
+            const cycle = () => {
+                label.innerText = phases[i % 4];
+                node.style.transform = (i % 4 < 2) ? 'scale(1.5)' : 'scale(1)';
+                i++;
+            };
+            cycle(); breathInterval = setInterval(cycle, 4000);
+        }
 
+        function haltBreathing() {
+            clearInterval(breathInterval);
+            document.getElementById('breath-node').style.transform = 'scale(1)';
+            document.getElementById('breath-label').innerText = "Idle";
+            document.getElementById('breath-btn').classList.remove('hidden');
+            document.getElementById('halt-btn').classList.add('hidden');
+        }
+
+        function clearLogs() { if(confirm("PURGE ALL DATA?")) { localStorage.removeItem('obs78_logs'); renderLogs(); } }
+
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
         window.onload = () => { generateMission(); renderLogs(); };
     </script>
 </body>
