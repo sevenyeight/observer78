@@ -10,26 +10,21 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         body { font-family: 'JetBrains+Mono', monospace; background-color: #050505; color: #00ff41; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .hud-border { border: 1px solid #00ff41; box-shadow: 0 0 15px rgba(0, 255, 65, 0.15); background: rgba(0, 20, 0, 0.2); }
-        .scanline { background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(0, 255, 0, 0.03), rgba(0, 255, 0, 0.01)); background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 100; position: fixed; inset: 0; }
-        .tab-content { display: none; height: 100%; overflow-y: auto; padding-bottom: 160px; }
-        .active-tab { display: flex; flex-direction: column; }
+        .hud-border { border: 1px solid #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.1); }
+        .scanline { background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 100; position: fixed; inset: 0; }
+        .tab-content { display: none; height: 100%; overflow-y: auto; padding-bottom: 140px; }
+        .active-tab { display: block; }
+        .recording { animation: pulse-red 1s infinite; color: #ff3e3e !important; border-color: #ff3e3e !important; }
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         
-        /* INFINITY TUNNEL */
-        .tunnel-container { width: 220px; height: 220px; perspective: 600px; display: none; position: relative; }
+        /* INFINITY TUNNEL REFINED */
+        .tunnel-container { width: 180px; height: 180px; perspective: 600px; display: none; position: relative; margin: 20px auto; }
         .tunnel-ring { border: 1.5px solid #00ff41; border-radius: 50%; position: absolute; top: 0; left: 0; right: 0; bottom: 0; animation: tunnel-flow 4s infinite linear; opacity: 0; }
         @keyframes tunnel-flow {
-            0% { transform: scale(0.1) translateZ(-500px); opacity: 0; }
+            0% { transform: scale(0.1) translateZ(-400px); opacity: 0; }
             20% { opacity: 0.8; }
-            100% { transform: scale(2.5) translateZ(500px); opacity: 0; }
+            100% { transform: scale(2.2) translateZ(400px); opacity: 0; }
         }
-
-        /* DECORATIVE DIALS */
-        .rotating-dial { border: 1px dashed #004411; border-radius: 50%; animation: spin 10s infinite linear; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .wave-line { height: 2px; background: #00ff41; opacity: 0.3; width: 100%; animation: wave 2s infinite ease-in-out; }
-        @keyframes wave { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(4); } }
-        
         audio { filter: invert(100%) hue-rotate(90deg) brightness(1.5); height: 35px; width: 100%; margin-top: 8px; }
     </style>
 </head>
@@ -38,104 +33,78 @@
 
     <header class="p-3 border-b border-green-900 flex justify-between items-center text-[10px] uppercase">
         <div class="flex items-center gap-2">
-            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#00ff41]"></span>
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
             UNIT: OBSRVR-78
         </div>
         <div id="clock">00:00:00</div>
-        <div class="text-green-800">BUFFER: 98%</div>
+        <div class="text-green-700 font-bold">LINK: SECURE</div>
     </header>
 
-    <main class="flex-1 p-4 relative overflow-hidden">
+    <main class="flex-1 p-4 relative">
         
-        <section id="tab-dispatch" class="tab-content active-tab space-y-4 h-full">
-            <div class="hud-border p-4 rounded-sm">
+        <section id="tab-dispatch" class="tab-content active-tab space-y-4">
+            <div class="hud-border bg-black/80 p-4 rounded-sm">
                 <div class="flex justify-between items-center border-b border-green-900 pb-2 mb-3">
                     <h2 class="text-xs font-bold uppercase tracking-widest">Field Mission</h2>
-                    <button onclick="generateMission()" class="text-[9px] border border-green-700 px-2 py-1 active:bg-green-900">RECALIBRATE</button>
+                    <button onclick="generateMission()" class="text-[9px] border border-green-700 px-2 py-1">RECALIBRATE</button>
                 </div>
-                <p id="mission-text" class="text-lg italic leading-tight uppercase min-h-[60px]">...</p>
+                <p id="mission-text" class="text-lg italic leading-tight uppercase">Scanning for tasks...</p>
             </div>
             
-            <div class="hud-border p-4 rounded-sm flex-1 flex flex-col space-y-3">
+            <div class="hud-border bg-black/80 p-4 rounded-sm space-y-3">
                 <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Entry Node</h2>
-                <textarea id="log-input" placeholder="RECORD FIELD DATA..." class="flex-1 w-full bg-black/40 border border-green-900 p-3 text-green-400 focus:outline-none text-sm"></textarea>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="saveLog('TEXT')" class="py-3 bg-green-900/40 border border-green-500 text-[10px] font-bold uppercase">Commit Text</button>
-                    <button id="record-btn" onclick="toggleRecording()" class="py-3 border border-green-500 text-[10px] font-bold uppercase flex items-center justify-center gap-2">
-                        <span id="record-icon" class="w-2 h-2 bg-green-500 rounded-full"></span>
-                        <span id="record-text">Voice Link</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="h-16 flex items-center justify-around opacity-40">
-                <div class="w-10 h-10 rotating-dial relative flex items-center justify-center">
-                    <div class="w-1 h-4 bg-green-900"></div>
-                </div>
-                <div class="flex-1 px-4 space-y-1">
-                    <div class="wave-line"></div>
-                    <div class="text-[8px] text-center tracking-tighter uppercase">Scanning Environment Resonance...</div>
-                </div>
-                <div class="w-10 h-10 rotating-dial" style="animation-direction: reverse;"></div>
+                <textarea id="log-input" placeholder="RECORD PHYSICAL REALITY..." class="w-full bg-black border border-green-900 p-2 text-green-400 focus:outline-none h-24 text-sm"></textarea>
+                <button onclick="saveLog('TEXT')" class="w-full py-3 bg-green-900/20 border border-green-500 text-[10px] font-bold uppercase">Archive Text</button>
+                <button id="record-btn" onclick="toggleRecording()" class="w-full py-3 border border-green-500 text-[10px] font-bold uppercase flex items-center justify-center gap-2">
+                    <span id="record-icon" class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span id="record-text">Voice Link Mode</span>
+                </button>
             </div>
         </section>
 
-        <section id="tab-vitals" class="tab-content space-y-6 text-center pt-2 h-full">
-            <div class="hud-border p-6 rounded-sm flex-1 flex flex-col items-center justify-center space-y-8">
-                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2 w-full">Regulation HUD</h2>
+        <section id="tab-vitals" class="tab-content space-y-6 text-center pt-4">
+            <div class="hud-border bg-black/80 p-6 rounded-sm">
+                <h2 class="text-xs font-bold uppercase tracking-widest border-b border-green-900 pb-2 mb-8">System Regulation</h2>
                 
-                <div id="breath-node" class="w-32 h-32 rounded-full border-2 border-green-500 flex items-center justify-center transition-transform duration-[4000ms] linear relative">
-                    <div id="breath-label" class="text-[10px] uppercase font-bold">Stable</div>
-                    <div class="absolute -inset-4 border border-green-900/30 rounded-full rotating-dial"></div>
+                <div id="breath-node" class="w-32 h-32 mx-auto rounded-full border-2 border-green-500 flex items-center justify-center transition-transform duration-[4000ms] linear">
+                    <div id="breath-label" class="text-[10px] uppercase font-bold">Ready</div>
                 </div>
 
                 <div id="recal-container" class="tunnel-container">
-                    <div class="tunnel-ring" style="animation-delay: 0.0s"></div>
-                    <div class="tunnel-ring" style="animation-delay: 0.8s"></div>
-                    <div class="tunnel-ring" style="animation-delay: 1.6s"></div>
-                    <div class="tunnel-ring" style="animation-delay: 2.4s"></div>
-                    <div class="tunnel-ring" style="animation-delay: 3.2s"></div>
+                    <div class="tunnel-ring" style="animation-delay: 0s"></div>
+                    <div class="tunnel-ring" style="animation-delay: 1s"></div>
+                    <div class="tunnel-ring" style="animation-delay: 2s"></div>
+                    <div class="tunnel-ring" style="animation-delay: 3s"></div>
                 </div>
 
-                <div class="w-full space-y-2">
-                    <button id="breath-btn" onclick="startBreathing()" class="w-full py-4 border border-green-500 text-[10px] font-bold uppercase">Begin Respiration</button>
-                    <button id="recal-btn" onclick="startRecalibration()" class="w-full py-4 border border-green-500 text-[10px] font-bold uppercase">Tune Out (Recalibrate)</button>
-                    <button id="halt-btn" onclick="haltSystems()" class="hidden w-full py-4 border border-red-500 text-red-500 text-[10px] font-bold uppercase">Abort Session</button>
+                <div class="w-full flex flex-col gap-3 mt-8">
+                    <button id="breath-btn" onclick="startBreathing()" class="w-full py-3 border border-green-500 text-[10px] font-bold uppercase">Begin Inhale</button>
+                    <button id="recal-btn" onclick="startRecalibration()" class="w-full py-3 border border-green-500 text-[10px] font-bold uppercase">Tune Out (Recalibrate)</button>
+                    <button id="halt-btn" onclick="haltSystems()" class="hidden w-full py-3 border border-red-500 text-red-500 text-[10px] font-bold uppercase">Halt</button>
                 </div>
             </div>
-            <div class="p-4 bg-green-900/10 border-t border-b border-green-800 italic text-[11px] opacity-70">
-                <p id="mantra-display">"I am a guest in this space..."</p>
-            </div>
+            <p id="mantra-display" class="italic text-sm px-4">"I am a guest in this space..."</p>
         </section>
 
-        <section id="tab-logs" class="tab-content space-y-4 h-full">
+        <section id="tab-logs" class="tab-content space-y-4">
             <div class="flex justify-between items-center border-b border-green-900 pb-2">
-                <h2 class="text-xs font-bold uppercase">Extraction Archive</h2>
-                <button onclick="clearLogs()" class="text-[8px] text-red-800">WIPE ALL</button>
+                <h2 class="text-xs font-bold uppercase">Mission Archive</h2>
+                <button onclick="clearLogs()" class="text-[8px] text-red-800 font-bold">PURGE ALL</button>
             </div>
-            <div id="log-history" class="space-y-4 flex-1"></div>
+            <div id="log-history" class="space-y-4"></div>
         </section>
 
-        <section id="tab-mind" class="tab-content space-y-4 h-full">
-            <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Observer Meta-Data</h2>
-            <div class="space-y-4 text-[10px] opacity-60">
-                <div class="border-l-2 border-green-900 pl-4 py-2">
-                    <span class="text-green-500 font-bold block mb-1">REALITY_ANCHOR:</span>
-                    Pick a distant constant. It existed before your biological entry and will persist post-exit.
-                </div>
-                <div class="border-l-2 border-green-900 pl-4 py-2">
-                    <span class="text-green-500 font-bold block mb-1">STUBBORN_MATTER:</span>
-                    Grip a physical tool. Acknowledge its refusal to be affected by internal cognition.
-                </div>
-                <div class="border-l-2 border-green-900 pl-4 py-2">
-                    <span class="text-green-500 font-bold block mb-1">SCOUT_OPTIMIZATION:</span>
-                    Your streamlined phenotype is an intentional design. Local reactions are external interference only.
-                </div>
+        <section id="tab-mind" class="tab-content space-y-4">
+            <h2 class="text-xs font-bold uppercase border-b border-green-900 pb-2">Observer Protocols</h2>
+            <div class="space-y-4 text-xs opacity-80">
+                <p>[BEACON] Lock on a structure you didn't build. It persists without your biological entry.</p>
+                <p>[STUBBORNNESS] Squeeze gear. Matter refuses to be affected by internal cognition.</p>
+                <p>[PHENOTYPE] Your build is optimized for scouting. Local reactions are external interference.</p>
             </div>
         </section>
     </main>
 
-    <nav class="border-t border-green-900 bg-black flex justify-around p-3 pb-10 fixed bottom-0 w-full z-50">
+    <nav class="border-t border-green-900 bg-black flex justify-around p-3 pb-8 fixed bottom-0 w-full z-50">
         <button onclick="switchTab('tab-dispatch')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Dispatch</button>
         <button onclick="switchTab('tab-vitals')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Vitals</button>
         <button onclick="switchTab('tab-logs')" class="text-[9px] uppercase font-bold opacity-50 hover:opacity-100">Logs</button>
@@ -143,7 +112,7 @@
     </nav>
 
     <script>
-        // ICON SCRIPT
+        // ICON & HOME SCREEN SETUP
         (function() {
             const canvas = document.createElement('canvas'); canvas.width = 180; canvas.height = 180;
             const ctx = canvas.getContext('2d'); ctx.fillStyle = '#050505'; ctx.fillRect(0,0,180,180);
@@ -159,16 +128,16 @@
             "Record one 'Joy-Ping' (aesthetic pleasure) from the environment.",
             "Structural Audit: observe a shadow geometry you didn't create.",
             "Apply pressure to gear: verify its physical density.",
-            "Scan strangers: identify their mundane local mission."
+            "Audit an 'Independent Agenda': what mundane task is a local finishing?"
         ];
         const mantras = ["I am a guest in this space.", "Reality is stubborn; it persists without me.", "Phenotype optimized for field research."];
 
         let mediaRecorder; let audioChunks = []; let breathInterval;
-        const STORAGE_KEY = 'obs78_v6_final';
+        const STORAGE_KEY = 'obs78_v7_final';
 
         function switchTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.getElementById(id).style.display = 'flex';
+            document.getElementById(id).style.display = 'block';
             if(id === 'tab-vitals') {
                 document.getElementById('mantra-display').innerText = mantras[Math.floor(Math.random() * mantras.length)];
                 haltSystems();
@@ -194,18 +163,18 @@
                     };
                     mediaRecorder.start();
                     btn.classList.add('recording');
-                    document.getElementById('record-text').innerText = "LINKING...";
+                    document.getElementById('record-text').innerText = "RECORDING...";
                 } catch (err) { alert("Mic required."); }
             } else {
                 mediaRecorder.stop();
                 btn.classList.remove('recording');
-                document.getElementById('record-text').innerText = "Voice Link";
+                document.getElementById('record-text').innerText = "Voice Link Mode";
             }
         }
 
         function saveLog(type, data = null) {
             const hist = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-            hist.unshift({ type, text: type === 'TEXT' ? document.getElementById('log-input').value : '[VOICE_LOG]', audio: data, date: new Date().toLocaleString(), id: Date.now() });
+            hist.unshift({ type, text: type === 'TEXT' ? document.getElementById('log-input').value : '[VOICE_DATA]', audio: data, date: new Date().toLocaleString(), id: Date.now() });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(hist));
             document.getElementById('log-input').value = '';
             renderLogs();
@@ -216,9 +185,9 @@
             const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             document.getElementById('log-history').innerHTML = history.map(l => `
                 <div class="border-l-2 border-green-800 bg-green-900/5 p-3 text-xs mb-3">
-                    <div class="flex justify-between opacity-40 text-[7px] uppercase font-bold mb-1">
+                    <div class="flex justify-between opacity-40 text-[8px] mb-2 uppercase font-bold">
                         <span>${l.date}</span>
-                        <button onclick="shareEntry('${l.id}')" class="text-green-500 underline">EXTRACT</button>
+                        <button onclick="shareEntry('${l.id}')" class="text-green-500 underline">SHARE</button>
                     </div>
                     <p class="text-green-300">${l.text}</p>
                     ${l.audio ? `<audio controls playsinline src="${l.audio}"></audio>` : ''}
@@ -262,11 +231,11 @@
             document.getElementById('recal-container').style.display = 'none';
             document.getElementById('breath-node').style.display = 'flex';
             document.getElementById('breath-node').style.transform = 'scale(1)';
-            document.getElementById('breath-label').innerText = "Regulation";
+            document.getElementById('breath-label').innerText = "Ready";
             document.getElementById('halt-btn').classList.add('hidden');
         }
 
-        function clearLogs() { if(confirm("PURGE?")) { localStorage.removeItem(STORAGE_KEY); renderLogs(); } }
+        function clearLogs() { if(confirm("PURGE DATA?")) { localStorage.removeItem(STORAGE_KEY); renderLogs(); } }
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
         window.onload = () => { generateMission(); renderLogs(); };
     </script>
